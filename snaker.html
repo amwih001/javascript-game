@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <title></title>
+    <meta name="renderer" content="webkit" />
+    <meta name="force-rendering" content="webkit" />
+    <script type="text/javascript" src="http://lib.sinaapp.com/js/jquery/1.9.1/jquery-1.9.1.min.js"></script>
+    <style type="text/css">
+        body
+        {
+            margin: 0;
+        }
+        #container
+        {
+            margin-top: 20px;
+            margin-left: 30px;
+        }
+        #container table
+        {
+            border-collapse: collapse;
+            border: none;
+        }
+        #container table td
+        {
+            width: 8px;
+            height: 8px;
+            border: solid #b0a2a2 1px;
+        }
+        #container table td .circle
+        {
+            width: 6px;
+            height: 6px;
+            display:block;
+            background-color: Purple;
+            border-radius: 50%;
+            -moz-border-radius: 50%;
+            -webkit-border-radius: 50%;
+        }
+        
+        #container table td.snake
+        {
+            background-color: Red;
+            border-radius: 50%;
+            -moz-border-radius: 50%;
+            -webkit-border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+    </div>
+    <script type="text/javascript">
+        var snake = {
+            container: $('#container'),
+            matrix: { x: 60, y: 35 },
+            table: function () {
+                var html = new Array();
+                html.push('<table>');
+                for (var i = 1; i <= this.matrix.y; i++) {
+                    html.push('<tr>');
+                    for (var j = 1; j <= this.matrix.x; j++) {
+                        var _id = j + '_' + i;
+                        html.push('<td id="td_' + _id + '"><span id="sp_' + _id + '"></span></td>');
+                    }
+                    html.push('</tr>');
+                }
+                html.push('</table>');
+                return this.container.html(html.join(''));
+            },
+            log: function (msg) {
+                return console ? console.log(msg) : false;
+            },
+            //min<= r <= max
+            rand: function (min, max) {
+                var range = max - min;
+                var rand = Math.random();
+                var num = min + Math.round(rand * range); //生成指定范围随机数
+                return num;
+            },
+            tdsize: function () {
+                var td = $('#td_1_1');
+                var xy = { x: td.width(), y: td.height() };
+                return xy;
+            },
+            drawFoot: function (x, y, m_x, m_y) {
+                return $('#sp_' + x + '_' + y).addClass('circle').css({ marginLeft: m_x, marginTop: m_y });
+            },
+            createFood: function () {
+                //var tdnum = this.matrix.x * this.matrix.y;
+                //var foodnum = Math.floor(tdnum * 0.7 * (this.rand(20, 40) * 0.01));
+                //this.log(foodnum);
+                var rand_x = this.rand(1, this.matrix.x);
+                var rand_y = this.rand(1, this.matrix.y);
+                var margin_x = this.rand(0, 2);
+                var margin_y = this.rand(0, 2);
+                return this.drawFoot(rand_x, rand_y, margin_x, margin_y);
+            },
+
+            player: function (partner) {
+                return {
+                    that: partner,
+                    timer: undefined,
+                    speed: 1000,
+                    node: [],
+                    count: 0,
+                    direction: ['left', 'right', 'up', 'down'],
+
+                    event: function () {
+                        switch (window.event.keyCode) {
+                            case 37:
+                                if (this.direction != 'right') {
+                                    this.direction = 'left';
+                                    this.count++;
+                                }
+                                break;
+                            case 38:
+                                if (this.direction != 'down') {
+                                    this.direction = 'up';
+                                    this.count++;
+                                }
+                                break;
+                            case 39:
+                                if (this.direction != 'left') {
+                                    this.direction = 'right';
+                                    this.count++;
+                                }
+                                break;
+                            case 40:
+                                if (this.direction != 'up') {
+                                    this.direction = 'down';
+                                    this.count++;
+                                }
+                                break;
+                            case 13:
+                                //enter
+                                break;
+                        }
+                        snake.log('change this.direction=' + this.direction + ' , this.count=' + this.count);
+                    },
+                    clearSnake: function (dom) {
+                        if (dom) {
+                            dom.removeClass('snake');
+                        } else {
+                            for (var i = 0; i < this.node.length; i++) {
+                                this.node[i].dom.removeClass('snake');
+                            }
+                        }
+                    },
+                    drawSnaker: function (dom) {
+                        if (dom) {
+                            dom.addClass('snake');
+                        } else {
+                            for (var i = 0; i < this.node.length; i++) {
+                                this.node[i].dom.addClass('snake');
+                            }
+                        }
+                    },
+                    getdom: function (x, y, ele) {
+                        ele = ele || 'td';
+                        return $('#' + ele + '_' + x + '_' + y);
+                    },
+                    createSnaker: function () {
+                        var x = snake.rand(1, snake.matrix.x);
+                        var y = snake.rand(1, snake.matrix.y);
+                        var dom = this.getdom(x, y);
+                        this.node.push({ x: x, y: y, dom: dom });
+
+
+                        dom = this.getdom(x - 1, y);
+                        this.node.push({ x: x - 1, y: y, dom: dom });
+                        dom = this.getdom(x - 2, y);
+                        this.node.push({ x: x - 2, y: y, dom: dom });
+                        dom = this.getdom(x - 3, y);
+                        this.node.push({ x: x - 3, y: y, dom: dom });
+
+                        dom = this.getdom(x - 4, y);
+                        this.node.push({ x: x - 4, y: y, dom: dom });
+
+                        dom = this.getdom(x - 5, y);
+                        this.node.push({ x: x - 5, y: y, dom: dom });
+
+                        dom = this.getdom(x - 6, y);
+                        this.node.push({ x: x - 6, y: y, dom: dom });
+
+                        dom = this.getdom(x - 7, y);
+                        this.node.push({ x: x - 7, y: y, dom: dom });
+                    },
+                    nextPos: function () {
+                        var node = this.node[0];
+                        var x = node.x;
+                        var y = node.y;
+                        switch (this.direction) {
+                            case 'left':
+                                x--;
+                                break;
+                            case 'right':
+                                x++;
+                                break;
+                            case 'down':
+                                y++;
+                                break;
+                            case 'up':
+                                y--;
+                                break;
+                        }
+                        return { x: x, y: y };
+                    },
+                    timerRun: function () {
+                        var xy = this.nextPos();
+                        var nextdom = this.getdom(xy.x, xy.y);
+                        this.clearSnake(this.node.pop().dom);
+                        this.drawSnaker(nextdom);
+                        this.node.unshift({ x: xy.x, y: xy.y, dom: nextdom });
+                    },
+                    timerInit: function () {
+                        if (this.timer) {
+                            return;
+                        }
+                        this.timer = setInterval(this.timerRun.bind(this), this.speed);
+                    },
+                    init: function () {
+                        this.direction = this.direction[snake.rand(0, 3)];
+                        snake.log('this.direction=' + this.direction);
+                        this.createSnaker();
+                        this.drawSnaker();
+                        this.timerInit();
+
+                        document.onkeyup = this.event.bind(this);
+                    }
+                };
+            },
+
+            init: function () {
+                this.table();
+                this.createFood();
+
+                var player = new this.player(this);
+                player.init();
+
+            }
+
+        };
+        $(function () {
+            snake.init();
+        })
+    </script>
+</body>
+</html>
